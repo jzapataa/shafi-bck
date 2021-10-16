@@ -5,7 +5,7 @@ var moment = require('moment');
 var secret = 'clave_secreta_app_shafi';
 
 exports.ensureAuth = function (req, res, next) {
-    if (req.headers.authorization) {
+    if (!req.headers.authorization) {
         return res.status(403).send({ message: 'La petición no tiene la cabecera de autenticación' });
     }
 

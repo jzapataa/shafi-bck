@@ -4,6 +4,7 @@ var bcrypt = require('bcrypt-nodejs');
 var mongoosePaginate = require('mongoose-pagination');
 var fs = require('fs');
 var path = require('path');
+var moment = require('moment');
 
 var User = require('../models/User');
 var jwt = require('../services/jwt');
@@ -16,9 +17,10 @@ function saveUser(req, res) {
     if (params.name && params.surname && params.email && params.password) {
         user.name = params.name;
         user.surname = params.surname;
-        user.email = params.email;
+        user.email = params.email.toLowerCase();;
         user.role = 'ROLE_USER';
         user.image = null;
+        user.created_at = moment().unix();
 
         User.find({ email: user.email.toLowerCase() }).exec((err, users) => {
             if (err) return res.status(500).send({ message: 'Error en la petición de usuarios' });
@@ -62,7 +64,7 @@ function saveUser(req, res) {
 function loginUser(req, res) {
     var params = req.body;
 
-    var email = params.email;
+    var email = params.email.toLowerCase();
     var password = params.password;
 
     User.findOne({ email: email }, (err, user) => {
@@ -113,7 +115,7 @@ function getUsers(req, res) {
 
     var itemsPerPage = 5;
 
-    User.find().sort('_id').mongoosePaginate(page, itemsPerPage, (err, users, total) => {
+    User.find().sort('_id').paginate(page, itemsPerPage, (err, users, total) => {
         if (err) return res.status(500).send({ message: ' Error en la petición' });
 
         if (!users) return res.status(404).send({ message: 'No se han encontrado usuarios disponibles' });
@@ -132,7 +134,7 @@ function updateUser(req, res) {
         return res.status(500).send({ message: 'No tienes permiso para actualizado los datos de ese usuario' });
     }
 
-    User.findByIdAndUpdate(identity_user_id, update, { new: true }, (err, userUpdated) => {
+    User.findByIdAndUpdate(userId, update, { new: true }, (err, userUpdated) => {
         if (err) return res.status(500).send({ message: ' Error en la petición' });
 
         if (!userUpdated) return res.status(404).send({ message: 'El usuario no existes' });
@@ -148,7 +150,7 @@ function uploadImage(req, res) {
         var file_path = req.files.image.path;
         var file_split = file_path.split('\\');
         var file_name = file_split[2];
-
+        console.log(file_name);
         var ext_split = file_name.split('\.');
         var file_ext = ext_split[1];
 
@@ -198,6 +200,24 @@ function removeFilesOfUploads(file_path, message) {
     });
 }
 
+
+function deleteUser(req, res){
+    var userId = req.params.id;
+
+    User.findByIdAndRemove(userId, (err, userRemoved) =>{
+
+        if(err) return res.status(500).send({message: 'No se ha podido eliminar el usuario'});
+        
+
+        if(!userRemoved) return res.status(404).send({message: 'No se encuentra ese usuario'});
+        
+
+        return res.status(200).send({
+            message: 'Usuario eliminado'
+        });
+    });
+}
+
 module.exports = {
     saveUser,
     loginUser,
@@ -205,5 +225,6 @@ module.exports = {
     getUsers,
     updateUser,
     uploadImage,
-    getImageFile
+    getImageFile,
+    deleteUser
 }

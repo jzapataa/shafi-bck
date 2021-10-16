@@ -5,8 +5,9 @@ var Schema = mongoose.Schema;
 
 var ExpenseSchema = Schema({
     name: String,
+    description: String,
     amount: Number,
-    date: Date,
+    created_at: String,
     user: {type: Schema.ObjectId, ref: 'User'},
 });
 
