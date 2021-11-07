@@ -7,7 +7,7 @@ var ExpenseSchema = Schema({
     name: String,
     description: String,
     amount: Number,
-    created_at: String,
+    date: Date,
     user: {type: Schema.ObjectId, ref: 'User'},
 });
 

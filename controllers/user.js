@@ -134,13 +134,25 @@ function updateUser(req, res) {
         return res.status(500).send({ message: 'No tienes permiso para actualizado los datos de ese usuario' });
     }
 
-    User.findByIdAndUpdate(userId, update, { new: true }, (err, userUpdated) => {
-        if (err) return res.status(500).send({ message: ' Error en la petición' });
+    User.find({ email: update.email.toLowerCase() }).exec((err, users) => {
 
-        if (!userUpdated) return res.status(404).send({ message: 'El usuario no existes' });
+        var user_isset = false; 
+        users.forEach((user) =>{
+            if (user && user._id != userId) user_isset = true; 
+        });   
 
-        return res.status(200).send({ userUpdated });
+        if(user_isset) return res.status(404).send({ message: 'Ese email ya existe' });
+        
+        User.findByIdAndUpdate(userId, update, { new: true }, (err, userUpdated) => {
+            if (err) return res.status(500).send({ message: ' Error en la petición' });
+
+            if (!userUpdated) return res.status(404).send({ message: 'El usuario no existes' });
+
+            return res.status(200).send({ userUpdated });
+        });
     });
+
+
 }
 
 function uploadImage(req, res) {
@@ -201,16 +213,16 @@ function removeFilesOfUploads(file_path, message) {
 }
 
 
-function deleteUser(req, res){
+function deleteUser(req, res) {
     var userId = req.params.id;
 
-    User.findByIdAndRemove(userId, (err, userRemoved) =>{
+    User.findByIdAndRemove(userId, (err, userRemoved) => {
 
-        if(err) return res.status(500).send({message: 'No se ha podido eliminar el usuario'});
-        
+        if (err) return res.status(500).send({ message: 'No se ha podido eliminar el usuario' });
 
-        if(!userRemoved) return res.status(404).send({message: 'No se encuentra ese usuario'});
-        
+
+        if (!userRemoved) return res.status(404).send({ message: 'No se encuentra ese usuario' });
+
 
         return res.status(200).send({
             message: 'Usuario eliminado'

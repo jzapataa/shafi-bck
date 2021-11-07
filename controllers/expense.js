@@ -15,7 +15,7 @@ function saveExpense(req, res){
     expense.description = params.description;
     expense.amount = params.amount;
     expense.user = req.user.sub;
-    expense.created_at = moment().unix();
+    expense.date = params.date;
 
     expense.save((err, expenseStored) =>{
         if(err) return res.status(500).send({ message: 'Error al guardar la publicación'});
@@ -47,8 +47,27 @@ function getExpenses(req, res){
 
     var itemsPerPage = 5;
 
-    Expense.find().sort('_id').paginate(page, itemsPerPage, (err, expenses, total) =>{
-        Expense.populate(expenses, {path: "user", select: ['-password', '-role']}, function(err, expenses){
+    Expense.find().sort({date: -1}).paginate(page, itemsPerPage, (err, expenses, total) =>{
+        Expense.populate(expenses, {path: "user", select: '-password'}, function(err, expenses){
+            if (err) return res.status(500).send({ message: ' Error en la petición' });
+
+            if (!expenses) return res.status(404).send({ message: 'No se han encontrado gastos' });
+
+            return res.status(200).send({ expenses, total, pages: Math.ceil(total / itemsPerPage) });
+        });
+    });
+}
+
+function getExpensesLimit(req, res){
+    var page = 1;
+    if(req.params.page) {
+        page = req.params.page;
+    }
+
+    var itemsPerPage = 5;
+
+    Expense.find().sort({date: -1}).limit(5).paginate(page, itemsPerPage, (err, expenses, total) =>{
+        Expense.populate(expenses, {path: "user", select: '-password'}, function(err, expenses){
             if (err) return res.status(500).send({ message: ' Error en la petición' });
 
             if (!expenses) return res.status(404).send({ message: 'No se han encontrado gastos' });
@@ -98,7 +117,9 @@ function deleteExpense(req, res){
 module.exports = {
     saveExpense,
     getExpenses,
+    getExpensesLimit,
     getExpense,
     deleteExpense,
     updateExpense
+
 }
